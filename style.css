@@ -1,4 +1,4 @@
-.calculator {
+#calculator {
   width: 240px;
   display: flex;
   flex-direction: column;
@@ -10,26 +10,26 @@
   gap: 10px;
 }
 
-.display {
+#display, .key {
   height: 50px;
-  padding: 0 10px;
   border: black solid 1px;
   box-sizing: border-box;
+  font-size: 30px;
+  user-select: none;
+}
+
+#display {
+  padding: 0 10px;
   background-color: #EEEEEE;
   display: flex;
   justify-content: right;
   align-items: center;
-  font-size: 30px;
 }
 
 .key {
-  height: 50px;
-  border: black solid 1px;
-  box-sizing: border-box;
   background-color: #FFFFBB;
   flex: 1 0 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 20px;
 }
