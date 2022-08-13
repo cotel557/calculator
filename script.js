@@ -1,3 +1,4 @@
+// execute operation specified by 'operator' on 'a' and 'b'
 function operate(operator, a, b) {
   const opToFunc = {
     '+': (a, b) => a + b,
@@ -8,6 +9,7 @@ function operate(operator, a, b) {
   return opToFunc[operator](a, b);
 }
 
+// current state of the calculator
 let calcState = {
   displayText: "",
   chosenOp: "",
@@ -15,9 +17,13 @@ let calcState = {
   lastKind: "clear"
 };
 
+// run if any button on the calculator is clicked
 function clickButton(e) {
+  // inputs that change calculator state
   const char = e.target.textContent;
   const kind = e.target.getAttribute('data-kind');
+
+  //mutate calculator state according to input
   const kindToFunc = {
     "num": chooseNum,
     "clear": chooseClear,
@@ -25,12 +31,13 @@ function clickButton(e) {
     "op": chooseOp
   }
   const func = kindToFunc[kind];
-
   func(calcState, char);
 
+  // update appearance of calculator
   updateDisplay(calcState);
 }
 
+// if a digit (0-9) is pressed
 function chooseNum(c, char) {
   if (c.lastKind === "num") {
     c.displayText = c.displayText + char;
@@ -40,6 +47,7 @@ function chooseNum(c, char) {
   c.lastKind = "num";
 }
 
+// if 'clear' is pressed
 function chooseClear(c, char) {
   c.displayText = "";
   c.chosenOp = "";
@@ -47,6 +55,7 @@ function chooseClear(c, char) {
   c.lastKind = "clear";
 }
 
+// if '=' is pressed
 function chooseEquals(c, char) {
   if (c.chosenOp && c.lastKind === "num") {
     c.prevText = "" + operate(c.chosenOp, parseInt(c.prevText), parseInt(c.displayText));
@@ -56,6 +65,7 @@ function chooseEquals(c, char) {
   }
 }
 
+// if an operator (+, -, *, /) is pressed
 function chooseOp(c, char) {
   if (c.displayText) {
     if (!c.chosenOp) {
@@ -74,6 +84,7 @@ function chooseOp(c, char) {
   }
 }
 
+// update appearance of calculator
 function updateDisplay(c) {
   display.textContent = c.displayText;
 }
