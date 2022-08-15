@@ -12,9 +12,10 @@ function operate(operator, a, b) {
 // current state of the calculator
 let calcState = {
   displayText: "",
-  chosenOp: "",
-  prevText: "",
-  lastKind: "clear"
+  chosenOp: null,
+  prevResult: null,
+  lastKind: "clear",
+  errorMessage: null
 };
 
 // run if any button on the calculator is clicked
@@ -39,44 +40,72 @@ function clickButton(e) {
 
 // if a digit (0-9) is pressed
 function chooseNum(c, char) {
-  if (c.lastKind === "num") {
-    c.displayText = c.displayText + char;
+  let temp = (c.lastKind === "num") ? c.displayText : "";
+
+  if (char === '.') {
+    if (!temp.includes('.')) {
+      temp += '.';
+    }
+  } else if (char === 'del') {
+    if (temp.length > 0) {
+      temp = temp.slice(0, -1);
+    } else {
+      return;
+    }
   } else {
-    c.displayText = "" + char;
+    temp += char;
   }
+
+  c.displayText = temp;
   c.lastKind = "num";
+  c.errorMessage = null;
 }
 
 // if 'clear' is pressed
 function chooseClear(c, char) {
   c.displayText = "";
-  c.chosenOp = "";
-  c.prevText = "";
+  c.chosenOp = null;
+  c.prevResult = null;
   c.lastKind = "clear";
+  c.errorMessage = null;
 }
 
 // if '=' is pressed
 function chooseEquals(c, char) {
   if (c.chosenOp && c.lastKind === "num") {
-    c.prevText = "" + operate(c.chosenOp, parseInt(c.prevText), parseInt(c.displayText));
-    c.displayText = c.prevText;
-    c.chosenOp = "";
-    c.lastKind = "equals";
+    const displayNum = parseFloat(c.displayText);
+    if (c.chosenOp === '/' && displayNum === 0) {
+      chooseClear(c, char);
+      c.errorMessage = "Can't divide by zero!";
+    } else {
+      c.prevResult = operate(c.chosenOp, c.prevResult, displayNum);
+      c.displayText = Math.round(10000 * c.prevResult) / 10000;
+      c.chosenOp = null;
+      c.lastKind = "equals";
+    }
   }
 }
 
 // if an operator (+, -, *, /) is pressed
 function chooseOp(c, char) {
-  if (c.displayText) {
-    if (!c.chosenOp) {
-      c.prevText = c.displayText;
+  if (c.displayText !== "") {
+    const displayNum = parseFloat(c.displayText);
+    if (c.chosenOp === null) {
+      if (c.lastKind !== "equals") {
+        c.prevResult = displayNum;
+      }
       c.chosenOp = char;
       c.lastKind = "op";
     } else if (c.lastKind === "num") {
-      c.prevText = "" + operate(c.chosenOp, parseInt(c.prevText), parseInt(c.displayText));
-      c.displayText = c.prevText;
-      c.chosenOp = char;
-      c.lastKind = "op";
+      if (c.chosenOp === '/' && displayNum === 0) {
+        chooseClear(c, char);
+        c.errorMessage = "Can't divide by zero!";
+      } else {
+        c.prevResult = operate(c.chosenOp, c.prevResult, displayNum);
+        c.displayText = Math.round(10000 * c.prevResult) / 10000;
+        c.chosenOp = char;
+        c.lastKind = "op";
+      }
     } else if (c.lastKind === "op") {
       c.chosenOp = char;
       c.lastKind = "op";
@@ -86,9 +115,37 @@ function chooseOp(c, char) {
 
 // update appearance of calculator
 function updateDisplay(c) {
-  display.textContent = c.displayText;
+  display.textContent = c.errorMessage ?? c.displayText;
+
+  // highlight selected operator
+  const ops = Array.from(document.querySelectorAll('.op'));
+  ops.forEach(op => op.classList.remove('selected-op'));
+  const selectedOp = ops.find(op => op.textContent === c.chosenOp);
+  if (selectedOp) {
+    selectedOp.classList.add('selected-op');
+  }
 }
 
 buttons = document.querySelectorAll('.key');
 display = document.querySelector('#display');
 buttons.forEach(b => b.addEventListener('click', clickButton));
+
+function keyPress(e) {
+  const k = e.key;
+
+  if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'].includes(k)) {
+    chooseNum(calcState, k);
+  } else if (k === 'Backspace') {
+    chooseNum(calcState, 'del');
+  } else if (['+', '-', '*', '/'].includes(k)) {
+    chooseOp(calcState, k);
+  } else if (k === '=') {
+    chooseEquals(calcState, k);
+  } else if (k === 'C') {
+    chooseClear(calcState, k);
+  }
+
+  updateDisplay(calcState);
+}
+
+window.addEventListener('keydown', keyPress);
